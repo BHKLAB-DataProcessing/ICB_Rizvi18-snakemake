@@ -19,7 +19,7 @@ rule get_MultiAssayExp:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "processed/CNA_seg.txt")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript -e \
@@ -39,7 +39,7 @@ rule format_snv:
         S3.remote(prefix + "download/SNV.txt.gz"),
         S3.remote(prefix + "processed/cased_sequenced.csv")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript scripts/Format_SNV.R \
@@ -54,7 +54,7 @@ rule format_cna_seg:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "download/CNA_seg.txt.gz")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript scripts/Format_CNA_seg.R \
@@ -69,7 +69,7 @@ rule format_cna_gene:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "download/CNA_gene.txt.gz")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript scripts/Format_CNA_gene.R \
@@ -84,7 +84,7 @@ rule format_clin:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "download/CLIN.txt")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript scripts/Format_CLIN.R \
@@ -99,7 +99,7 @@ rule format_cased_sequenced:
         S3.remote(prefix + "download/CLIN.txt"),
         S3.remote(prefix + "download/CLIN_Samstein.txt")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         Rscript scripts/Format_cased_sequenced.R \
@@ -115,7 +115,7 @@ rule download_data:
         S3.remote(prefix + "download/CNA_gene.txt.gz"),
         S3.remote(prefix + "download/CNA_seg.txt.gz")
     resources:
-        mem_mb=1000
+        mem_mb=2000
     shell:
         """
         wget {data_source}CLIN.txt -O {prefix}download/CLIN.txt
