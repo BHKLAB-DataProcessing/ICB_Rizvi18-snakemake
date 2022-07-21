@@ -7,18 +7,16 @@ S3 = S3RemoteProvider(
 )
 prefix = config["prefix"]
 filename = config["filename"]
-data_source  = "https://raw.githubusercontent.com/BHKLAB-Pachyderm/ICB_Rizvi18-data/main/"
 
 rule get_MultiAssayExp:
-    output:
-        S3.remote(prefix + filename)
     input:
         S3.remote(prefix + "processed/CLIN.csv"),
         S3.remote(prefix + "processed/CNA_gene.csv"),
         S3.remote(prefix + "processed/SNV.csv"),
         S3.remote(prefix + "processed/cased_sequenced.csv"),
-        S3.remote(prefix + "processed/CNA_seg.txt"),
         S3.remote(prefix + "annotation/Gencode.v40.annotation.RData")
+    output:
+        S3.remote(prefix + filename)
     resources:
         mem_mb=4000
     shell:
@@ -43,11 +41,11 @@ rule download_annotation:
         """
 
 rule format_snv:
-    output:
-        S3.remote(prefix + "processed/SNV.csv")
     input:
         S3.remote(prefix + "download/SNV.txt.gz"),
         S3.remote(prefix + "processed/cased_sequenced.csv")
+    output:
+        S3.remote(prefix + "processed/SNV.csv")
     resources:
         mem_mb=2000
     shell:
@@ -57,27 +55,27 @@ rule format_snv:
         {prefix}processed \
         """
 
-rule format_cna_seg:
-    output:
-        S3.remote(prefix + "processed/CNA_seg.txt")
-    input:
-        S3.remote(prefix + "processed/cased_sequenced.csv"),
-        S3.remote(prefix + "download/CNA_seg.txt.gz")
-    resources:
-        mem_mb=2000
-    shell:
-        """
-        Rscript scripts/Format_CNA_seg.R \
-        {prefix}download \
-        {prefix}processed \
-        """
+# rule format_cna_seg:
+#     input:
+#         S3.remote(prefix + "processed/cased_sequenced.csv"),
+#         S3.remote(prefix + "download/CNA_seg.txt.gz")
+#     output:
+#         S3.remote(prefix + "processed/CNA_seg.txt")
+#     resources:
+#         mem_mb=2000
+#     shell:
+#         """
+#         Rscript scripts/Format_CNA_seg.R \
+#         {prefix}download \
+#         {prefix}processed \
+#         """
 
 rule format_cna_gene:
-    output:
-        S3.remote(prefix + "processed/CNA_gene.csv")
     input:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "download/CNA_gene.txt.gz")
+    output:
+        S3.remote(prefix + "processed/CNA_gene.csv")
     resources:
         mem_mb=2000
     shell:
@@ -88,11 +86,11 @@ rule format_cna_gene:
         """
 
 rule format_clin:
-    output:
-        S3.remote(prefix + "processed/CLIN.csv")
     input:
         S3.remote(prefix + "processed/cased_sequenced.csv"),
         S3.remote(prefix + "download/CLIN.txt")
+    output:
+        S3.remote(prefix + "processed/CLIN.csv")
     resources:
         mem_mb=2000
     shell:
@@ -103,11 +101,11 @@ rule format_clin:
         """
 
 rule format_cased_sequenced:
-    output:
-        S3.remote(prefix + "processed/cased_sequenced.csv")
     input:
         S3.remote(prefix + "download/CLIN.txt"),
         S3.remote(prefix + "download/CLIN_Samstein.txt")
+    output:
+        S3.remote(prefix + "processed/cased_sequenced.csv")
     resources:
         mem_mb=2000
     shell:
@@ -117,20 +115,28 @@ rule format_cased_sequenced:
         {prefix}processed \
         """
 
-rule download_data:
+rule format_downloaded_data:
+    input:
+        S3.remote(prefix + "download/nsclc_pd1_msk_2018.tar.gz"),
+        S3.remote(prefix + "download/tmb_mskcc_2018.tar.gz")
     output:
         S3.remote(prefix + "download/CLIN.txt"),
         S3.remote(prefix + "download/CLIN_Samstein.txt"),
         S3.remote(prefix + "download/SNV.txt.gz"),
-        S3.remote(prefix + "download/CNA_gene.txt.gz"),
-        S3.remote(prefix + "download/CNA_seg.txt.gz")
+        S3.remote(prefix + "download/CNA_gene.txt.gz")
+    shell:
+        """
+        Rscript scripts/format_downloaded_data.R {prefix}download      
+        """
+
+rule download_data:
+    output:
+        S3.remote(prefix + "download/nsclc_pd1_msk_2018.tar.gz"),
+        S3.remote(prefix + "download/tmb_mskcc_2018.tar.gz")
     resources:
         mem_mb=2000
     shell:
         """
-        wget {data_source}CLIN.txt -O {prefix}download/CLIN.txt
-        wget {data_source}CLIN_Samstein.txt -O {prefix}download/CLIN_Samstein.txt
-        wget {data_source}SNV.txt.gz -O {prefix}download/SNV.txt.gz
-        wget {data_source}CNA_gene.txt.gz -O {prefix}download/CNA_gene.txt.gz
-        wget {data_source}CNA_seg.txt.gz -O {prefix}download/CNA_seg.txt.gz
+        wget -O {prefix}download/nsclc_pd1_msk_2018.tar.gz https://cbioportal-datahub.s3.amazonaws.com/nsclc_pd1_msk_2018.tar.gz
+        wget -O {prefix}download/tmb_mskcc_2018.tar.gz https://cbioportal-datahub.s3.amazonaws.com/tmb_mskcc_2018.tar.gz
         """ 

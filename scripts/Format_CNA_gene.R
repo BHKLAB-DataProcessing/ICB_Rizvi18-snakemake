@@ -1,4 +1,5 @@
 library(data.table)
+library(stringr)
 
 args <- commandArgs(trailingOnly = TRUE)
 input_dir <- args[1]
@@ -9,7 +10,10 @@ case = read.csv( file.path(output_dir, "cased_sequenced.csv"), stringsAsFactors=
 cna = as.data.frame( fread( file.path(input_dir, "CNA_gene.txt.gz"), stringsAsFactors=FALSE , sep="\t" ))
 rownames(cna) = cna[ , 1 ] 
 cna = cna[ , -1 ]
-colnames(cna) = sapply( colnames(cna) , function(x){ paste( unlist( strsplit( x , "-" , fixed=TRUE ))[1:2] , collapse="." ) } )
+
+colnames(cna) <- unlist(lapply(colnames(cna), function(col_name){
+  str_split(col_name, '.T')[[1]][1]
+}))
 
 cna = cna[ , colnames(cna) %in% case[ case$cna %in% 1 , ]$patient ]
 
